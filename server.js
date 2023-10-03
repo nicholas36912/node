@@ -1,39 +1,47 @@
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
-const { parse } = require('querystring');
+const http = Require('http');
+const fs = Require('fs').promises;
+const path = Require('path');
 
 const dbPath = path.join(__dirname, 'users.json');
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && req.url.startsWith('/api/v1/users')) {
-        // Handle version 1 of the API
-        handleAPIv1(req, res);
+        try {
+            // Handle version 1 of the API using async/await
+            const response = await handleAPIv1(req);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(response));
+        } catch (error) {
+            console.error('Error:', error);
+            res.writeHead(500, { 'Content-Type': 'text/plain' });
+            res.end('Internal Server Error');
+        }
     } else if (req.method === 'GET' && req.url.startsWith('/api/v2/users')) {
-        // Handle version 2 of the API
-        handleAPIv2(req, res);
+        try {
+            // Handle version 2 of the API using async/await
+            const response = await handleAPIv2(req);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(response));
+        } catch (error) {
+            console.error('Error:', error);
+            res.writeHead(500, { 'Content-Type': 'text/plain' });
+            res.end('Internal Server Error');
+        }
     } else {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.end('Not Found');
     }
 });
 
-// Define a function to handle version 1 of the API
-function handleAPIv1(req, res) {
+// function to handle version 1 of the API with promises
+async function handleAPIv1(req) {
     if (req.method === 'GET' && req.url === '/api/v1/users') {
-        // Handle API filtering, sorting, and pagination here
         const urlParams = new URLSearchParams(req.url.split('?')[1]);
         const nameFilter = urlParams.get('name');
         const sortBy = urlParams.get('sort');
 
-        fs.readFile(dbPath, 'utf8', (err, data) => {
-            if (err) {
-                res.writeHead(500, { 'Content-Type': 'text/plain' });
-                res.end('Internal Server Error');
-                console.error('Error reading file:', err);
-                return;
-            }
-
+        try {
+            const data = await fs.readFile(dbPath, 'utf8');
             let users = JSON.parse(data);
 
             if (nameFilter) {
@@ -46,39 +54,30 @@ function handleAPIv1(req, res) {
                 users.sort((a, b) => a.name.localeCompare(b.name));
             }
 
-            // Handle pagination
             const page = parseInt(urlParams.get('page')) || 1;
             const limit = parseInt(urlParams.get('limit')) || 10;
             const startIndex = (page - 1) * limit;
             const endIndex = page * limit;
             const usersOnPage = users.slice(startIndex, endIndex);
 
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(usersOnPage));
-        });
+            return usersOnPage;
+        } catch (error) {
+            throw error;
+        }
     } else {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('Not Found');
+        throw new Error('Not Found');
     }
 }
 
-// Define a function to handle version 2 of the API (You can implement it similarly)
-// Define a function to handle version 2 of the API
-function handleAPIv2(req, res) {
+// function to handle version 2 of the API with promises
+async function handleAPIv2(req) {
     if (req.method === 'GET' && req.url === '/api/v2/users') {
-        // Handle API filtering, sorting, and pagination for version 2 here
         const urlParams = new URLSearchParams(req.url.split('?')[1]);
         const nameFilter = urlParams.get('name');
         const sortBy = urlParams.get('sort');
 
-        fs.readFile(dbPath, 'utf8', (err, data) => {
-            if (err) {
-                res.writeHead(500, { 'Content-Type': 'text/plain' });
-                res.end('Internal Server Error');
-                console.error('Error reading file:', err);
-                return;
-            }
-
+        try {
+            const data = await fs.readFile(dbPath, 'utf8');
             let users = JSON.parse(data);
 
             if (nameFilter) {
@@ -91,23 +90,22 @@ function handleAPIv2(req, res) {
                 users.sort((a, b) => a.name.localeCompare(b.name));
             }
 
-            // Handle pagination for version 2
             const page = parseInt(urlParams.get('page')) || 1;
             const limit = parseInt(urlParams.get('limit')) || 10;
             const startIndex = (page - 1) * limit;
             const endIndex = page * limit;
             const usersOnPage = users.slice(startIndex, endIndex);
 
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(usersOnPage));
-        });
+            return usersOnPage;
+        } catch (error) {
+            throw error;
+        }
     } else {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('Not Found');
+        throw new Error('Not Found');
     }
 }
+
 // Start the server on port 3000
 server.listen(3000, () => {
     console.log('Server running on <http://localhost:3000/>');
 });
-
