@@ -19,3 +19,7 @@ Demonstrated the use of callbacks along with Promises and async/await.
 Updated error handling for async operations.
 
 server uses the node.js event loop to manage the async operations with callbacks and promises
+
+commit - 5
+implemented web app, class and functional component to call api user data 
+
